@@ -1,25 +1,25 @@
 {
-  "printWidth": 80,
-  "singleQuote": true,
-  "useTabs": false,
-  "tabWidth": 2,
-  "semi": true,
-  "trailingComma": "all",
-  "arrowParens": "always",
-  "bracketSpacing": true,
-  "bracketSameLine": false,
-  "plugins": ["prettier-plugin-organize-imports"],
+	"printWidth": 80,
+	"singleQuote": true,
+	"useTabs": true,
+	"tabWidth": 2,
+	"semi": true,
+	"trailingComma": "all",
+	"arrowParens": "always",
+	"bracketSpacing": true,
+	"bracketSameLine": false,
+	"plugins": ["prettier-plugin-organize-imports"],
 
-  "importOrder": ["^@?//w", "^[./]"],
-  "importOrderSeparation": true,
-  "importOrderSortSpecifiers": true,
+	"importOrder": ["^@?//w", "^[./]"],
+	"importOrderSeparation": true,
+	"importOrderSortSpecifiers": true,
 
-  "overrides": [
-    {
-      "files": "*.html",
-      "options": {
-        "parser": "angular"
-      }
-    }
-  ]
+	"overrides": [
+		{
+			"files": "*.html",
+			"options": {
+				"parser": "angular"
+			}
+		}
+	]
 }
