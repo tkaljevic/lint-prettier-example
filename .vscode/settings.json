@@ -1,29 +1,9 @@
 {
-  "editor.defaultFormatter": "rvest.vs-code-prettier-eslint",
-  "editor.formatOnType": false, // required
-  "editor.formatOnPaste": true, // optional
-  "editor.formatOnSave": true, // optional
-  "editor.formatOnSaveMode": "file", // required to format on save
-  "files.autoSave": "onFocusChange", // optional but recommended
-  "vs-code-prettier-eslint.prettierLast": false,
-  "peacock.color": "#ec7760",
-  "workbench.colorCustomizations": {
-    "activityBar.activeBackground": "#f19e8e",
-    "activityBar.background": "#f19e8e",
-    "activityBar.foreground": "#15202b",
-    "activityBar.inactiveForeground": "#15202b99",
-    "activityBarBadge.background": "#128e26",
-    "activityBarBadge.foreground": "#e7e7e7",
-    "commandCenter.border": "#15202b99",
-    "sash.hoverBorder": "#f19e8e",
-    "statusBar.background": "#ec7760",
-    "statusBar.foreground": "#15202b",
-    "statusBarItem.hoverBackground": "#e75032",
-    "statusBarItem.remoteBackground": "#ec7760",
-    "statusBarItem.remoteForeground": "#15202b",
-    "titleBar.activeBackground": "#ec7760",
-    "titleBar.activeForeground": "#15202b",
-    "titleBar.inactiveBackground": "#ec776099",
-    "titleBar.inactiveForeground": "#15202b99"
-  } // set as "true" to run 'prettier' last not first
+	"editor.defaultFormatter": "rvest.vs-code-prettier-eslint",
+	"editor.formatOnType": false, // required
+	"editor.formatOnPaste": true, // optional
+	"editor.formatOnSave": true, // optional
+	"editor.formatOnSaveMode": "file", // required to format on save
+	"files.autoSave": "onFocusChange", // optional but recommended
+	"vs-code-prettier-eslint.prettierLast": false // set as "true" to run 'prettier' last not first
 }
