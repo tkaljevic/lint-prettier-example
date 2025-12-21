@@ -60,6 +60,7 @@
 				"@typescript-eslint/prefer-optional-chain": "error",
 				"@typescript-eslint/no-unnecessary-condition": "error",
 				"@angular-eslint/use-lifecycle-interface": "error",
+				"@angular-eslint/prefer-on-push-component-change-detection": "error",
 				"@typescript-eslint/prefer-includes": "error",
 				"@typescript-eslint/prefer-string-starts-ends-with": "error",
 				"@typescript-eslint/no-duplicate-enum-values": "error",
