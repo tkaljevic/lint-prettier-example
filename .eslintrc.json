@@ -59,7 +59,19 @@
 				"@typescript-eslint/prefer-nullish-coalescing": "error",
 				"@typescript-eslint/prefer-optional-chain": "error",
 				"@typescript-eslint/no-unnecessary-condition": "error",
-				"@angular-eslint/use-lifecycle-interface": "error"
+				"@angular-eslint/use-lifecycle-interface": "error",
+				"@typescript-eslint/prefer-includes": "error",
+				"@typescript-eslint/prefer-string-starts-ends-with": "error",
+				"@typescript-eslint/no-duplicate-enum-values": "error",
+				"@typescript-eslint/no-mixed-enums": "error",
+				"@typescript-eslint/no-unnecessary-type-arguments": "error",
+				"@typescript-eslint/prefer-enum-initializers": "error",
+				"@typescript-eslint/no-duplicate-type-constituents": "error",
+				"@typescript-eslint/no-redundant-type-constituents": "error",
+				"@typescript-eslint/member-ordering": [
+					"error",
+					{ "default": ["signature", "field", "constructor", "method"] }
+				]
 			}
 		},
 		{
