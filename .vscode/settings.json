@@ -6,5 +6,8 @@
 	"editor.formatOnSaveMode": "file", // required to format on save
 	"files.autoSave": "onFocusChange", // optional but recommended
 	"vs-code-prettier-eslint.prettierLast": false,
-	"cSpell.words": ["lintstagedrc"] // set as "true" to run 'prettier' last not first
+	"cSpell.words": ["dbaeumer", "esbenp", "lintstagedrc", "rvest"],
+	"[markdown]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	} // set as "true" to run 'prettier' last not first
 }
