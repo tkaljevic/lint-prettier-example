@@ -9,4 +9,10 @@ import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 })
 export class App {
 	protected readonly title = signal('Eslint-Prettier-Husky');
+
+	public x = 1;
+
+	public test(): number {
+		return this.x;
+	}
 }
