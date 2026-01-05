@@ -1,4 +1,11 @@
 {
-  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=827846
-  "recommendations": ["angular.ng-template"]
+	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=827846
+	"recommendations": [
+		"angular.ng-template",
+		"streetsidesoftware.code-spell-checker",
+		"rvest.vs-code-prettier-eslint",
+		"esbenp.prettier-vscode",
+		"dbaeumer.vscode-eslint",
+		"editorconfig.editorconfig"
+	]
 }
