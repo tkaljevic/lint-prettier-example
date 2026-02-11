@@ -72,6 +72,13 @@
 				"@typescript-eslint/member-ordering": [
 					"error",
 					{ "default": ["signature", "field", "constructor", "method"] }
+				],
+				"id-length": [
+					"error",
+					{
+						"min": 3,
+						"exceptions": ["i", "j", "k", "id", "x", "y"]
+					}
 				]
 			}
 		},
@@ -92,7 +99,14 @@
 				"@angular-eslint/template/prefer-static-string-properties": "error",
 				"@angular-eslint/template/valid-aria": "error",
 				"@angular-eslint/template/banana-in-box": "error",
-				"@angular-eslint/template/no-interpolation-in-attributes": "error"
+				"@angular-eslint/template/no-interpolation-in-attributes": "error",
+				"id-length": [
+					"error",
+					{
+						"min": 3,
+						"exceptions": ["i", "j", "k", "id", "x", "y"]
+					}
+				]
 			}
 		}
 	]
