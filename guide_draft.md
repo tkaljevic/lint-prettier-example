@@ -211,8 +211,8 @@ Use `readonly` for variables that are never changed after initialization:
 ```ts
 ✔️ Good
 class UserService {
-	private readonly apiUrl = 'https://api.example.com';
-	private readonly http = inject(HttpClient);
+	#apiUrl = 'https://api.example.com';
+	#http = inject(HttpClient);
 }
 ```
 
@@ -315,16 +315,16 @@ Order of class members:
 ✔️ Good
 export class UserComponent {
 	// 1. Fields
-	private readonly userService = inject(UserService);
-	private userId = input.required<number>();
-	public userName = signal<string>('');
+	#userService = inject(UserService);
+	userId = input.required<number>();  // public input
+	userName = signal<string>('');  // public signal
 
 	// 2. Constructor
 	constructor() { }
 
 	// 3. Methods
-	public loadUser(): void { ... }
-	private handleUserData(user: User): void { ... }
+	loadUser(): void { ... }  // public - no keyword
+	#handleUserData(user: User): void { ... }  // private - # prefix
 }
 ```
 
@@ -361,6 +361,122 @@ user-profile.component.ts
 admin-user.model.ts
 move-direction.enum.ts
 api-routes.const.ts
+```
+
+### Models Organization
+
+**Models must be organized in separate files within a `models/` folder, grouped by meaning:**
+
+```
+src/
+├── models/
+│   ├── index.ts           // Main export - exports from all groups
+│   ├── users/
+│   │   ├── index.ts       // Export all user-related models
+│   │   ├── user.model.ts
+│   │   ├── create-user-dto.model.ts
+│   │   └── update-user-dto.model.ts
+│   ├── orders/
+│   │   ├── index.ts       // Export all order-related models
+│   │   ├── order.model.ts
+│   │   └── order-item.model.ts
+│   └── forms/
+│       ├── index.ts       // Export all form-related models
+│       ├── user-form.model.ts
+│       └── login-form.model.ts
+└── components/
+    └── user-list/
+        └── user-list.component.ts
+```
+
+**Group models by domain/feature:**
+
+- `users/` - All user-related interfaces (User, CreateUserDto, UpdateUserDto)
+- `orders/` - All order-related interfaces (Order, OrderItem, OrderStatus)
+- `forms/` - All form-related interfaces (UserForm, LoginForm, etc.)
+- `shared/` - Common interfaces used across multiple domains
+
+**Each model = One file:**
+
+```ts
+✔️ Good (users/user.model.ts) - Only User interface
+export interface User {
+	id: number;
+	firstName: string;
+	lastName: string;
+	email: string;
+}
+```
+
+```ts
+✔️ Good (users/create-user-dto.model.ts) - Only CreateUserDto
+export interface CreateUserDto {
+	firstName: string;
+	lastName: string;
+	email: string;
+}
+```
+
+```ts
+✔️ Good (users/update-user-dto.model.ts) - Only UpdateUserDto
+// Import from same group
+import { CreateUserDto } from './create-user-dto.model';
+
+export interface UpdateUserDto extends Partial<CreateUserDto> {
+	id: number;
+}
+```
+
+**Export through group index.ts:**
+
+```ts
+✔️ Good (users/index.ts)
+export * from './user.model';
+export * from './create-user-dto.model';
+export * from './update-user-dto.model';
+```
+
+```ts
+✔️ Good (forms/index.ts)
+export * from './user-form.model';
+export * from './login-form.model';
+```
+
+**Main index exports from all groups:**
+
+```ts
+✔️ Good (models/index.ts)
+export * from './users';
+export * from './orders';
+export * from './forms';
+export * from './shared';
+```
+
+**Import models - multiple ways:**
+
+```ts
+✔️ Good (components/user-list.component.ts)
+// From main models index (most common)
+import { User, CreateUserDto } from '../models';
+
+// From specific group
+import { User, CreateUserDto } from '../models/users';
+
+// From specific file (when needed)
+import { User } from '../models/users/user.model';
+```
+
+❌ **Never define models inline in components or services:**
+
+```ts
+❌ Bad (user-list.component.ts)
+export class UserListComponent {
+	// Don't define interfaces here!
+	interface User {
+		id: number;
+		name: string;
+	}
+}
 ```
 
 ### URLs
@@ -426,12 +542,12 @@ export class UserFacadeService {}
 ❌ Bad
 @Injectable({ providedIn: 'root' })
 export class UserHttpService {
-	public fetchUsers(): Observable<User[]> {
-		return this.http.get<User[]>(this.#apiUrl);
+	fetchUsers(): Observable<User[]> {
+		return this.#http.get<User[]>(this.#apiUrl);
 	}
 
-	public updateProfile(id: number, data: User): Observable<User> {
-		return this.http.put<User>(`${this.#apiUrl}/${id}`, data);
+	updateProfile(id: number, data: User): Observable<User> {
+		return this.#http.put<User>(`${this.#apiUrl}/${id}`, data);
 	}
 }
 
@@ -458,8 +574,8 @@ export class UserHttpService {
 	 * @example
 	 * this.fetchUsers().subscribe(users => console.log(users));
 	 */
-	public fetchUsers(): Observable<User[]> {
-		return this.http.get<User[]>(this.#apiUrl);
+	fetchUsers(): Observable<User[]> {
+		return this.#http.get<User[]>(this.#apiUrl);
 	}
 
 	/**
@@ -473,8 +589,8 @@ export class UserHttpService {
 	 * const updatedData = { name: 'John Doe', email: 'john@example.com' };
 	 * this.updateProfile(123, updatedData).subscribe(user => console.log(user));
 	 */
-	public updateProfile(id: number, data: User): Observable<User> {
-		return this.http.put<User>(`${this.#apiUrl}/${id}`, data);
+	updateProfile(id: number, data: User): Observable<User> {
+		return this.#http.put<User>(`${this.#apiUrl}/${id}`, data);
 	}
 }
 ````
@@ -502,14 +618,14 @@ Methods must be clear and without repeating entity name:
 
 ```ts
 ❌ Bad (in UserService)
-public getUserData(): Observable<User> { }
-public updateUserProfile(): Observable<User> { }
-public deleteUserAccount(): void { }
+getUserData(): Observable<User> { }
+updateUserProfile(): Observable<User> { }
+deleteUserAccount(): void { }
 
 ✔️ Good (in UserHttpService)
-public fetchData(): Observable<User> { }
-public updateProfile(data: User): Observable<User> { }
-public deleteAccount(id: number): void { }
+fetchData(): Observable<User> { }
+updateProfile(data: User): Observable<User> { }
+deleteAccount(id: number): void { }
 ```
 
 **Avoid generic method names** - method names must be descriptive and self-explanatory. Generic verbs like `check`, `process`, `handle`, or `do` without context are unclear and make code harder to understand.
@@ -517,16 +633,16 @@ public deleteAccount(id: number): void { }
 ```ts
 ❌ Bad
 // In PendingService
-public check(): boolean { } // Check what?
-public process(): void { } // Process what?
-public get(): Observable<any> { } // Get what?
+check(): boolean { } // Check what?
+process(): void { } // Process what?
+get(): Observable<any> { } // Get what?
 
 ✔️ Good
 // In PendingService
-public hasPendingTasks(): boolean { }
-public checkIfThereArePendingTasks(): boolean { }
-public processPendingOrders(): void { }
-public getPendingTaskCount(): Observable<number> { }
+hasPendingTasks(): boolean { }
+checkIfThereArePendingTasks(): boolean { }
+processPendingOrders(): void { }
+getPendingTaskCount(): Observable<number> { }
 ```
 
 **Why this matters:**
@@ -578,12 +694,12 @@ Always use `$` suffix:
 
 ```ts
 ❌ Bad
-private users: Observable<User[]>;
-private subscription: Subscription;
+#users: Observable<User[]>;
+#subscription: Subscription;
 
 ✔️ Good
-private users$: Observable<User[]>;
-private subscription$: Subscription;
+#users$: Observable<User[]>;
+#subscription$: Subscription;
 ```
 
 ### Methods that Respond to UI Actions
@@ -648,8 +764,8 @@ class UserProfileComponent {
 
 ✔️ Good
 class UserProfileComponent {
-	private user: User;
-	private admin: Admin;
+	user: User;
+	admin: Admin;
 }
 ```
 
@@ -670,10 +786,10 @@ export class UserProfileComponent implements OnInit {
 ✔️ Good
 export class UserProfileComponent implements OnInit {
 	ngOnInit(): void {
-		this.initializeUserData();
+		this.initUserData();
 	}
 
-	private initializeUserData(): void {
+	#initUserData(): void {
 		this.userService.getUserData().subscribe(user => {
 			// data processing...
 		});
@@ -692,7 +808,7 @@ Always use `OnPush` strategy:
 	templateUrl: './header.component.html'
 })
 export class HeaderComponent {
-	public users: User[];
+	users: User[];
 }
 ```
 
@@ -704,9 +820,9 @@ export class HeaderComponent {
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class HeaderComponent {
-	public users$ = new BehaviorSubject<User[]>([]);
+	users$ = new BehaviorSubject<User[]>([]);
 	// or even better:
-	public users = signal<User[]>([]);
+	users = signal<User[]>([]);
 }
 ```
 
@@ -722,7 +838,7 @@ Prefer signals over observables for template rendering:
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UsersComponent {
-	public users = signal<User[]>([]);
+	users = signal<User[]>([]);
 }
 ```
 
@@ -739,19 +855,23 @@ export class UsersComponent {
 
 ### Clear Encapsulation
 
-Always declare accessibility modifiers alongside properties and methods.
+**Accessibility Rules:**
+
+- **Public**: No keyword (nothing before the name)
+- **Protected**: Use `protected` keyword (for template-accessible members in components)
+- **Private**: Use `#` prefix, NO `private` keyword
 
 ```ts
 ❌ Bad
 export class ExampleComponent {
-	loginForm: FormGroup;
-	users: User[];
+	loginForm: FormGroup;  // unclear
+	private users: User[];  // don't use 'private' keyword
 }
 
 ✔️ Good
 export class ExampleComponent {
-	public loginForm: FormGroup;
-	private users: User[];
+	loginForm: FormGroup;  // public (no keyword)
+	#users: User[];  // private (# prefix)
 }
 ```
 
@@ -759,19 +879,20 @@ export class ExampleComponent {
 
 **Services:**
 
-- Use `public` for methods/properties accessed from outside the service
-- Use `private` with `#` prefix for internal implementation details
+- Public methods/properties: NO keyword (accessible from outside)
+- Private implementation: `#` prefix
 
 ```ts
 ✔️ Good
 export class UserHttpService {
-	// Public API - accessed from components
-	public fetchUsers(): Observable<User[]> {
+	// Public API - no keyword
+	fetchUsers(): Observable<User[]> {
 		return this.http.get<User[]>(this.#buildUrl());
 	}
 
 	// Private implementation - # prefix
 	#apiUrl = 'https://api.example.com/users';
+	#http = inject(HttpClient);
 
 	#buildUrl(): string {
 		return `${this.#apiUrl}/list`;
@@ -781,8 +902,9 @@ export class UserHttpService {
 
 **Components:**
 
-- Use `protected` for properties/methods used in the template
-- Use `private` with `#` prefix for internal implementation details not used in templates
+- Template-accessible: Use `protected` keyword
+- Internal only: Use `#` prefix
+- Public (rare): No keyword
 
 ```ts
 ✔️ Good
@@ -816,6 +938,7 @@ export class UserListComponent {
 - JavaScript private fields (`#`) provide true privacy at runtime
 - Cannot be accessed even via bracket notation or reflection
 - Enforced by the JavaScript engine, not just TypeScript compiler
+- Cleaner than `private` keyword
 
 #### Type Safety in HTTP Methods
 
@@ -860,66 +983,87 @@ export class ExampleComponent {
 	// 1. Angular decorators (@Input, @Output, @ViewChild)
 	@Input() userId!: number;
 
-	// 2. Public properties
-	public loginForm!: FormGroup;
-	public users: User[] = [];
+	// 2. Public properties (no keyword)
+	loginForm!: FormGroup;
+	users: User[] = [];
 
-	// 3. Private properties
-	private adminUsers: User[] = [];
-	private unsubscribe$ = new Subject<void>();
+	// 3. Private properties (# prefix)
+	#adminUsers: User[] = [];
+	#unsubscribe$ = new Subject<void>();
 
 	// 4. Constructor
 	constructor() { }
 
-	// 5. Public methods
-	public getUsers(): void { }
+	// 5. Public methods (no keyword)
+	getUsers(): void { }
 
-	// 6. Private methods
-	private initForm(): void { }
+	// 6. Private methods (# prefix)
+	#initForm(): void { }
 }
 ```
 
 ### Use Regions
 
+**Always use regions with proper spacing:**
+
+- Add empty line **after** `// #region`
+- Add empty line **before** `// #endregion`
+
 ```ts
 class SomeGeneralClassName {
-	#region Dependencies
-	private userService = inject(UserService);
-	#endregion
+	// #region Dependencies
 
-	#region Angular stuff
+	#userService = inject(UserService);
+
+	// #endregion
+
+	// #region Angular stuff
+
 	@Input() userId!: number;
 	@Output() userChanged = new EventEmitter<User>();
-	#endregion
 
-	#region Class properties
-	public users = signal<User[]>([]);
-	private isLoading = signal<boolean>(false);
-	#endregion
+	// #endregion
+
+	// #region Class properties
+
+	users = signal<User[]>([]);
+	#isLoading = signal<boolean>(false);
+
+	// #endregion
 
 	constructor() {}
 
-	#region Lifecycle hooks
+	// #region Lifecycle hooks
+
 	ngOnInit(): void {
 		this.#initUsers();
 	}
-	#endregion
 
-	#region Init
-	private initUsers(): void { }
-	#endregion
+	// #endregion
 
-	#region UI Responses
-	public onSave(): void { }
-	#endregion
+	// #region Init
 
-	#region Handlers
-	private handleUsers = (users: User[]): void => { }
-	#endregion
+	#initUsers(): void {}
 
-	#region Utility
-	private formatUserName(user: User): string { }
-	#endregion
+	// #endregion
+
+	// #region UI Responses
+
+	protected onSave(): void {}
+
+	// #endregion
+
+	// #region Handlers
+
+	#handleUsers = (users: User[]): void => {};
+
+	// #endregion
+
+	// #region Utility
+
+	#formatUserName(user: User): string {}
+
+	// #endregion
 }
 ```
 
@@ -949,13 +1093,13 @@ const login = new FormGroup<LoginForm>({
 ```ts
 ✔️ Good
 export class AppComponent {
-	private destroyRef = inject(DestroyRef);
-	private http = inject(HttpClient);
+	#destroyRef = inject(DestroyRef);
+	#http = inject(HttpClient);
 
 	constructor() {
-		this.http
+		this.#http
 			.get('api/user')
-			.pipe(takeUntilDestroyed(this.destroyRef))
+			.pipe(takeUntilDestroyed(this.#destroyRef))
 			.subscribe();
 	}
 }
@@ -990,8 +1134,8 @@ this.userService
 ```ts
 ❌ Bad
 export class UserService {
-	private apiUrl = 'https://api.example.com/users';
-	private localStorageKey = 'user_data';
+	#apiUrl = 'https://api.example.com/users';  // hardcoded
+	#localStorageKey = 'user_data';  // hardcoded
 }
 
 ✔️ Good
@@ -1004,8 +1148,8 @@ enum LocalStorageKeys {
 }
 
 export class UserService {
-	private apiUrl = ApiPaths.Users;
-	private localStorageKey = LocalStorageKeys.UserData;
+	#apiUrl = ApiPaths.Users;
+	#localStorageKey = LocalStorageKeys.UserData;
 }
 ```
 
@@ -1095,13 +1239,13 @@ Use `inject()` function instead of constructor injection:
 ```ts
 ❌ Bad
 constructor(
-	private userService: UserService,
-	private router: Router
+	#userService: UserService,
+	#router: Router
 ) { }
 
 ✔️ Good
-private userService = inject(UserService);
-private router = inject(Router);
+#userService = inject(UserService);
+#router = inject(Router);
 ```
 
 ### Templates
