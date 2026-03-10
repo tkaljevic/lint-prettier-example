@@ -1399,6 +1399,106 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 };
 ```
 
+### Deferrable Views
+
+Use `@defer` to lazily load non-critical parts of the template. This improves initial load performance by deferring the rendering and bundle loading of heavy or below-the-fold content until it is actually needed.
+
+```html
+❌ Bad
+<!-- Heavy component always rendered and included in the initial bundle -->
+<app-analytics-dashboard />
+<app-comments-section />
+
+✔️ Good
+<!-- Loaded and rendered only when the element enters the viewport -->
+@defer (on viewport) {
+<app-analytics-dashboard />
+} @placeholder {
+<div class="skeleton"></div>
+}
+
+<!-- Loaded after the browser becomes idle -->
+@defer (on idle) {
+<app-comments-section />
+}
+```
+
+**When to use `@defer`:**
+
+- Heavy components not needed on initial render (charts, rich text editors, modals)
+- Below-the-fold content (sections the user has to scroll to)
+- Features used only by a subset of users (admin panels, advanced settings)
+- Any component that can be loaded after the page is interactive without affecting UX
+
+**Available triggers:**
+
+- `on idle` — defers until the browser is idle
+- `on viewport` — defers until the element enters the viewport
+- `on interaction` — defers until the user interacts with the placeholder
+- `on hover` — defers until the user hovers over the placeholder
+- `when <condition>` — defers until a boolean expression becomes true
+
+**Use `@placeholder` and `@loading` to avoid layout shifts:**
+
+```html
+@defer (on viewport) {
+<app-heavy-chart />
+} @placeholder (minimum 100ms) {
+<div class="chart-skeleton"></div>
+} @loading (minimum 200ms) {
+<app-spinner />
+} @error {
+<p>Failed to load chart.</p>
+}
+```
+
+### Pure Pipes Over Method Calls in Templates
+
+Avoid calling methods directly in templates for data transformations. Angular re-evaluates every method call in the template on each change detection cycle, even if the input hasn't changed. Pure pipes are memoized — they only re-execute when their input changes.
+
+```html
+❌ Bad
+<!-- getFullName() is called on every change detection cycle -->
+<p>{{ getFullName(user) }}</p>
+<li *ngFor="let item of getFilteredItems(items)">{{ item.name }}</li>
+```
+
+```ts
+❌ Bad
+getFullName(user: User): string {
+	return `${user.firstName} ${user.lastName}`;
+}
+
+getFilteredItems(items: Item[]): Item[] {
+	return items.filter(item => item.active);
+}
+```
+
+```ts
+✔️ Good
+@Pipe({ name: 'fullName', pure: true, standalone: true })
+export class FullNamePipe implements PipeTransform {
+	transform(user: User): string {
+		return `${user.firstName} ${user.lastName}`;
+	}
+}
+
+@Pipe({ name: 'activeItems', pure: true, standalone: true })
+export class ActiveItemsPipe implements PipeTransform {
+	transform(items: Item[]): Item[] {
+		return items.filter(item => item.active);
+	}
+}
+```
+
+```html
+✔️ Good
+<p>{{ user | fullName }}</p>
+<li *ngFor="let item of items | activeItems">{{ item.name }}</li>
+```
+
+Pure pipes are the default — omitting `pure: true` is fine since it's already the default value. Only use `pure: false` when the transformation depends on external mutable state, and do so sparingly as it removes the memoization benefit.
+
 ### Templates
 
 **Native control flow instead of structural directives:**
