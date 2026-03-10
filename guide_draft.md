@@ -204,6 +204,20 @@ interface CreateUserDto {
 function create(userData: CreateUserDto): User { ... }
 ```
 
+**No console statements**
+
+`console.log` and other console methods are not allowed in production code. Use a dedicated logging service instead:
+
+```ts
+❌ Bad
+console.log(user);
+console.error('Something went wrong');
+
+✔️ Good
+this.#logger.log(user);
+this.#logger.error('Something went wrong');
+```
+
 **Prefer readonly**
 
 Use `readonly` for variables that are never changed after initialization:
@@ -266,6 +280,36 @@ interface User {
 	name: string;
 	age: number;
 }
+```
+
+**No unnecessary type arguments**
+
+Don't pass type arguments that are already the default:
+
+```ts
+❌ Bad
+const subject = new Subject<void>();
+const items = new Array<string>();
+
+✔️ Good
+const subject = new Subject();
+const items: string[] = [];
+```
+
+**No duplicate or redundant type constituents**
+
+Avoid repeating the same type in a union or intersection, and avoid types that are made redundant by another member:
+
+```ts
+❌ Bad
+type A = string | string;         // duplicate
+type B = string | unknown;        // string is redundant — unknown absorbs everything
+type C = string & never;          // never makes the whole type never
+
+✔️ Good
+type A = string | number;
+type B = unknown;
+type C = never;
 ```
 
 **Enum rules**
@@ -784,7 +828,6 @@ function formatName(age: number, name: string): void { }
 for (let i = 0; i < 10; i++) { } // i, j, k in loops
 const id = user.id; // id for identifiers
 const x = point.x; // x, y for coordinates
-callback prefixed with 'fn' // for functions
 ```
 
 ### Observables and Subscriptions
@@ -1122,59 +1165,59 @@ The order of regions is mandatory for components. Use the following template as 
 
 ```ts
 class MyComponent {
-	// #region Dependencies
+  // #region Dependencies
 
-	#userService = inject(UserService);
+  #userService = inject(UserService);
 
-	// #endregion
+  // #endregion
 
-	// #region Angular stuff
+  // #region Angular stuff
 
-	userId = input.required<number>();
-	userChanged = output<User>();
+  userId = input.required<number>();
+  userChanged = output<User>();
 
-	// #endregion
+  // #endregion
 
-	// #region Class properties
+  // #region Class properties
 
-	protected users = signal<User[]>([]);
-	#isLoading = signal<boolean>(false);
+  protected users = signal<User[]>([]);
+  #isLoading = signal<boolean>(false);
 
-	// #endregion
+  // #endregion
 
-	constructor() {}
+  constructor() {}
 
-	// #region Lifecycle hooks
+  // #region Lifecycle hooks
 
-	ngOnInit(): void {
-		this.#initUsers();
-	}
+  ngOnInit(): void {
+    this.#initUsers();
+  }
 
-	// #endregion
+  // #endregion
 
-	// #region Init
+  // #region Init
 
-	#initUsers(): void {}
+  #initUsers(): void {}
 
-	// #endregion
+  // #endregion
 
-	// #region UI Responses
+  // #region UI Responses
 
-	protected onSave(): void {}
+  protected onSave(): void {}
 
-	// #endregion
+  // #endregion
 
-	// #region Handlers
+  // #region Handlers
 
-	#handleUsers = (users: User[]): void => {};
+  #handleUsers = (users: User[]): void => {};
 
-	// #endregion
+  // #endregion
 
-	// #region Utility
+  // #region Utility
 
-	#formatUserName(user: User): string {}
+  #formatUserName(user: User): string {}
 
-	// #endregion
+  // #endregion
 }
 ```
 
@@ -1508,7 +1551,7 @@ Pure pipes are the default — omitting `pure: true` is fine since it's already 
 <div *ngIf="user">{{ user.name }}</div>
 <div *ngFor="let item of items">{{ item }}</div>
 <div [ngSwitch]="status">
-	<div *ngSwitchCase="'active'">Active</div>
+  <div *ngSwitchCase="'active'">Active</div>
 </div>
 
 ✔️ Good @if (user) {
@@ -1586,12 +1629,12 @@ export class MyComponent implements OnInit {
 ```html
 ✔️ Good
 <button
-	(click)="onSave()"
-	(keydown.enter)="onSave()"
-	[attr.aria-label]="'Save user data'"
-	[attr.aria-disabled]="isDisabled"
+  (click)="onSave()"
+  (keydown.enter)="onSave()"
+  [attr.aria-label]="'Save user data'"
+  [attr.aria-disabled]="isDisabled"
 >
-	Save
+  Save
 </button>
 ```
 
