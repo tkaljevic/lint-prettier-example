@@ -18,11 +18,11 @@ A comprehensive guide to style conventions, best practices, and rules for writin
 
 ### Basic Rules
 
-- **Maximum line length**: 80 characters
+- **Maximum line length**: 120 characters
 - **Quotes**: Single quotes (`'`) instead of double quotes (`"`)
-- **Indentation**: Tabs (tab width: 2)
+- **Indentation**: Spaces (2 spaces indentation)
 - **Semicolons**: Always at the end of statements (`;`)
-- **Trailing commas**: Always where valid (objects, arrays, etc.)
+- **Trailing commas**: Don't use it.
 - **Arrow functions**: Always use parentheses around parameters `(param) => {}`
 - **Spacing**: Spaces between brackets in objects `{ foo: bar }`
 - **JSX/HTML closing bracket**: On a new line
@@ -143,10 +143,10 @@ Use `const` for variables that are never reassigned:
 
 ```ts
 ❌ Bad
-let MAX_COUNT = 100;
+let maxCount = 100;
 
 ✔️ Good
-const MAX_COUNT = 100;
+const maxCount = 100;
 ```
 
 **Magic numbers**
@@ -158,13 +158,13 @@ Avoid "magic numbers", use named constants (except 0, 1, 2 and enum values):
 if (users.length > 50) { ... }
 
 ✔️ Good
-const MAX_USERS = 50;
-if (users.length > MAX_USERS) { ... }
+const maxUsers = 50;
+if (users.length > maxUsers) { ... }
 ```
 
 **Function complexity**
 
-Maximum cyclomatic complexity: 10
+Maximum cyclomatic complexity: 3
 
 ```ts
 ❌ Bad
@@ -217,18 +217,6 @@ class UserService {
 ```
 
 #### TypeScript Operators
-
-**Nullish coalescing**
-
-Prefer `??` operator instead of `||`:
-
-```ts
-❌ Bad
-const value = input || 'default';
-
-✔️ Good
-const value = input ?? 'default';
-```
 
 **Optional chaining**
 
@@ -314,16 +302,31 @@ Order of class members:
 ```ts
 ✔️ Good
 export class UserComponent {
-	// 1. Fields
-	#userService = inject(UserService);
+	// 1. ClassProperties
 	userId = input.required<number>();  // public input
 	userName = signal<string>('');  // public signal
+	#isAdmin = false;
 
 	// 2. Constructor
 	constructor() { }
 
 	// 3. Methods
 	loadUser(): void { ... }  // public - no keyword
+	#handleUserData(user: User): void { ... }  // private - # prefix
+}
+
+❌ Bad
+export class UserComponent {
+	// 1. ClassProperties
+	userName = signal<string>('');  // public signal
+
+	// 2. Constructor
+	constructor() { }
+	userId = input.required<number>();  // public input
+
+	// 3. Methods
+	loadUser(): void { ... }  // public - no keyword
+	#isAdmin = false;
 	#handleUserData(user: User): void { ... }  // private - # prefix
 }
 ```
@@ -366,6 +369,11 @@ api-routes.const.ts
 ### Models Organization
 
 **Models must be organized in separate files within a `models/` folder, grouped by meaning:**
+
+**File organization:**
+
+- If model/enum is small and used only within another model (and not exported), it can be in the same file.
+- Larger models and enums should be in separate files.
 
 ```
 src/
@@ -509,14 +517,7 @@ class OrderSummaryComponent { }
 
 ### Services
 
-Every service must have a type in its name:
-
-#### Core Services
-
-```ts
-@Injectable({ providedIn: 'root' })
-export abstract class CoreApiService {}
-```
+Every service name must include a suffix that reflects its type:
 
 #### Facade Services
 
@@ -525,7 +526,7 @@ export abstract class CoreApiService {}
 export class UserFacadeService {}
 ```
 
-#### Specialized Services
+#### Specialized Services (for Client Apps)
 
 - **State**: `UserStateService`, `ProductStateService`
 - **Form**: `UserFormService`, `OrderFormService`
@@ -536,81 +537,178 @@ export class UserFacadeService {}
 
 #### Documentation for Public Services and Methods
 
-**All public services and their public methods must be documented** with clear JSDoc comments. This helps other developers understand the purpose, parameters, return values, and usage patterns without diving into implementation details.
+**All public services and their public methods must be documented** with JSDoc comments that are rich enough for another developer to fully understand the purpose, behavior, and usage without reading the implementation.
 
-````ts
+A good service comment goes well beyond a one-liner. It should explain:
+
+- What the service does and why it exists
+- Key features or behaviors worth calling out
+- How to set it up or use it (with a concrete example)
+- Any important caveats, performance considerations, or design decisions
+
+```ts
 ❌ Bad
 @Injectable({ providedIn: 'root' })
-export class UserHttpService {
-	fetchUsers(): Observable<User[]> {
-		return this.#http.get<User[]>(this.#apiUrl);
-	}
-
-	updateProfile(id: number, data: User): Observable<User> {
-		return this.#http.put<User>(`${this.#apiUrl}/${id}`, data);
-	}
+export class SessionService {
+	showPopup(): void { }
+	extendSession(): void { }
 }
 
 ✔️ Good
 /**
- * Service responsible for handling all user-related HTTP operations.
- * Provides methods for fetching, creating, updating, and deleting user data.
+ * Manages user session lifecycle, including activity tracking and expiry warnings.
  *
- * @example
- * ```ts
- * constructor() {
- *   this.userHttpService.fetchUsers().subscribe(users => {
- *     console.log(users);
- *   });
- * }
- * ```
+ * This service monitors user inactivity and shows a warning popup before the session
+ * expires, giving the user the option to extend. If no action is taken, the user is
+ * automatically logged out when the timer reaches zero.
+ *
+ * **Key Features:**
+ * - Configurable activity window and popup timing via session constants
+ * - Cross-tab synchronization: extending the session in one tab dismisses popups
+ *   and resets timers in all other open tabs
+ * - Only one popup is shown at a time; subsequent calls dismiss the previous one
+ *
+ * **Usage:**
+ * This service is initialized automatically. No manual setup is required beyond
+ * including it in the root providers.
+ *
+ * @see {@link sessionPopupBeforeEnd} for popup timing configuration
+ * @see {@link sessionActivityWindowBeforeEnd} for activity window configuration
  */
 @Injectable({ providedIn: 'root' })
-export class UserHttpService {
-	/**
-	 * Fetches all users from the API.
-	 *
-	 * @returns Observable<User[]> Stream of all users
-	 * @example
-	 * this.fetchUsers().subscribe(users => console.log(users));
-	 */
-	fetchUsers(): Observable<User[]> {
-		return this.#http.get<User[]>(this.#apiUrl);
-	}
+export class SessionService {
 
 	/**
-	 * Updates user profile information.
+	 * Displays a session expiry warning snackbar with an "Extend session" action.
 	 *
-	 * @param id - The unique identifier of the user to update
-	 * @param data - Updated user data conforming to User interface
-	 * @returns Observable<User> Stream containing the updated user object
-	 * @throws HttpErrorResponse if the user is not found or validation fails
-	 * @example
-	 * const updatedData = { name: 'John Doe', email: 'john@example.com' };
-	 * this.updateProfile(123, updatedData).subscribe(user => console.log(user));
+	 * Called automatically when the time remaining reaches the configured threshold
+	 * ({@link sessionPopupBeforeEnd}). The popup informs the user that their session
+	 * will expire in one minute and provides a single action to extend it.
+	 *
+	 * **Behavior:**
+	 * - If a popup is already visible, it is dismissed before showing the new one
+	 * - Clicking "Extend session" calls {@link extendSession} and dismisses the snackbar
+	 * - Ignoring the popup results in automatic logout when the timer expires
+	 *
+	 * @internal Should not be called manually — triggered by the session timer
 	 */
-	updateProfile(id: number, data: User): Observable<User> {
-		return this.#http.put<User>(`${this.#apiUrl}/${id}`, data);
-	}
+	showPopup(): void { }
+
+	/**
+	 * Extends the current session by the full session duration and notifies other tabs.
+	 *
+	 * Resets the expiry timer and broadcasts the new expiry timestamp via BroadcastChannel,
+	 * so all other open tabs can dismiss their popups and sync their timers accordingly.
+	 *
+	 * @returns Observable<void> that completes once the session has been extended on the server
+	 * @throws HttpErrorResponse if the session extension request fails
+	 */
+	extendSession(): Observable<void> { }
 }
+```
+
+**Service-level comment should include:**
+
+- **What it does** — overall responsibility in 1–2 sentences
+- **Key Features** — bullet list of notable behaviors
+- **Usage** — how to set it up or get started (with `@example` or prose)
+- **Important caveats** — performance, zone behavior, cross-tab effects, etc.
+- **`@see` references** — link to related services, constants, or config
+
+**Method-level comment should include:**
+
+- **What it does** — clear description of the operation
+- **Behavior** — notable side effects, edge cases, sequencing
+- **`@param`** — each parameter with purpose and expected values
+- **`@returns`** — what is returned and in what shape
+- **`@throws`** — documented error cases
+- **`@internal`** — if the method should not be called manually
+
+#### Documentation for Constants, Config Files, and Models
+
+**Even a file with a single exported constant deserves a full comment** if that value has non-obvious behavior or interacts with other parts of the system. The comment should make it possible to understand the value's role, timing, and consequences without searching through the codebase.
+
+````ts
+❌ Bad
+export const sessionPopupBeforeEnd = 60 * 1000;
+
+✔️ Good
+/**
+ * Time (in milliseconds) before session expiry when the warning popup is displayed.
+ *
+ * When this threshold is reached without detected user activity during the activity
+ * window, a snackbar notification appears warning the user that their session will
+ * expire soon and providing an "Extend session" action button.
+ *
+ * **Session Timeline:**
+ * ```
+ * [Session Start] ──────────────────────────────► [Session Expires]
+ *                            ▲                 ▲
+ *                            │                 └─ Popup appears (1 min before expiry)
+ *                            └─ Activity window starts (2 min before expiry)
+ *
+ * User has no activity during the 2-minute window:
+ * ├─ 2 min before: Activity tracking starts
+ * ├─ 1 min before: ⚠️ Popup shows "Session expires in one minute"
+ * └─ 0 min: Auto-logout if no action taken
+ * ```
+ *
+ * **Popup Behavior:**
+ * - Displays a warning message: "Session expires in one minute"
+ * - Provides an action button: "Extend session"
+ * - Clicking "Extend session" → extends session by the full session duration
+ * - Ignoring the popup → automatic logout when timer reaches zero
+ * - Only one popup is shown at a time
+ *
+ * **Cross-Tab Synchronization:**
+ * If the user extends the session in one tab, all other open tabs automatically
+ * dismiss their popups and reset their timers to the new expiry time.
+ *
+ * **Interaction with Other Constants:**
+ * - Must be **less than** {@link sessionActivityWindowBeforeEnd}
+ * - The gap between them determines how long activity is tracked before the popup appears
+ *
+ * @default 1 minute (60_000 ms)
+ * @see {@link SessionService.showPopup} for popup implementation
+ */
+export const sessionPopupBeforeEnd = 60 * 1000; // 1 minute
 ````
 
-**Documentation guidelines:**
+The same principle applies to model properties. If a field has a non-obvious constraint, relationship, or business meaning, add a JSDoc comment above it:
 
-- **Service level**: Explain the overall purpose and responsibility of the service
-- **Method level**: Document what the method does, all parameters, return values, and potential errors
-- **Examples**: Provide usage examples for complex methods
-- **Parameters**: Describe each parameter's purpose and expected type
-- **Return values**: Explain what is returned and in what format
-- **Error cases**: Document potential errors or exceptions that can be thrown
+```ts
+❌ Bad
+export interface UserSession {
+	expiresAt: number;
+	activityWindowStart: number;
+}
+
+✔️ Good
+export interface UserSession {
+	/**
+	 * Unix timestamp (ms) when the session expires.
+	 * Used to calculate remaining time and schedule the expiry popup.
+	 */
+	expiresAt: number;
+
+	/**
+	 * Unix timestamp (ms) marking the start of the inactivity detection window.
+	 * Activity detected after this point resets the expiry timer.
+	 * Must always be earlier than {@link expiresAt}.
+	 */
+	activityWindowStart: number;
+}
+```
 
 **When to document:**
 
 - ✅ All public services (class-level JSDoc)
 - ✅ All public methods in services
-- ✅ Complex utility methods
-- ❌ Private methods (optional - only if very complex)
-- ❌ Simple getters/setters
+- ✅ Constants with non-obvious values or system-wide effects
+- ✅ Model properties with business rules, constraints, or relationships
+- ✅ Config files and tokens
+- ❌ Private methods (optional — only if logic is non-trivial)
+- ❌ Simple getters/setters with self-evident names
 
 ### Methods in Services
 
@@ -686,6 +784,7 @@ function formatName(age: number, name: string): void { }
 for (let i = 0; i < 10; i++) { } // i, j, k in loops
 const id = user.id; // id for identifiers
 const x = point.x; // x, y for coordinates
+callback prefixed with 'fn' // for functions
 ```
 
 ### Observables and Subscriptions
@@ -980,26 +1079,36 @@ this.#backendService.put<User>(`users/${id}`, userData).subscribe((user) => {
 ```ts
 ✔️ Good
 export class ExampleComponent {
-	// 1. Angular decorators (@Input, @Output, @ViewChild)
-	@Input() userId!: number;
+	// 1. Dependencies (if any)
 
-	// 2. Public properties (no keyword)
-	loginForm!: FormGroup;
-	users: User[] = [];
+	#userService = inject(UserService);
 
-	// 3. Private properties (# prefix)
+	// 2. Angular stuff (if any)
+	userId = input.required<number>();
+
+	// 3. Public properties (no keyword in services, `protected` in components)
+	protected loginForm!: FormGroup;
+	protected users: User[] = [];
+
+	// 4. Private properties (# prefix)
 	#adminUsers: User[] = [];
-	#unsubscribe$ = new Subject<void>();
 
-	// 4. Constructor
+	// 5. Constructor
 	constructor() { }
 
-	// 5. Public methods (no keyword)
-	getUsers(): void { }
+	// 6. Lifecycle hooks in components
 
-	// 6. Private methods (# prefix)
+	ngOnInit(): void {
+		this.#initForm();
+	}
+
+	// 7. Public methods (no keyword in service, `protected` in components)
+	protected getUsers(): void { }
+
+	// 8. Private methods (# prefix)
 	#initForm(): void { }
 }
+
 ```
 
 ### Use Regions
@@ -1009,8 +1118,10 @@ export class ExampleComponent {
 - Add empty line **after** `// #region`
 - Add empty line **before** `// #endregion`
 
+The order of regions is mandatory for components. Use the following template as a reference:
+
 ```ts
-class SomeGeneralClassName {
+class MyComponent {
 	// #region Dependencies
 
 	#userService = inject(UserService);
@@ -1019,14 +1130,14 @@ class SomeGeneralClassName {
 
 	// #region Angular stuff
 
-	@Input() userId!: number;
-	@Output() userChanged = new EventEmitter<User>();
+	userId = input.required<number>();
+	userChanged = output<User>();
 
 	// #endregion
 
 	// #region Class properties
 
-	users = signal<User[]>([]);
+	protected users = signal<User[]>([]);
 	#isLoading = signal<boolean>(false);
 
 	// #endregion
@@ -1067,10 +1178,18 @@ class SomeGeneralClassName {
 }
 ```
 
+For Services, use regions as well, but naming them is flexible — the goal is simply to group related methods together. For example:
+
+- Validators
+- Event handlers
+- General auth methods
+
 ### Reactive Forms with Types
 
+Typed forms are encouraged but not required. Reactive forms, however, are mandatory — template-driven forms should not be used.
+
 ```ts
-❌ Bad
+✔️ Good
 const login = new FormGroup({
 	email: new FormControl(''),
 	password: new FormControl('')
@@ -1086,6 +1205,9 @@ const login = new FormGroup<LoginForm>({
 	email: new FormControl('', { nonNullable: true }),
 	password: new FormControl('', { nonNullable: true })
 });
+
+❌ Bad
+<input [(ngModel)]="email" />
 ```
 
 ### Always Unsubscribe
@@ -1171,11 +1293,6 @@ export interface User {
 }
 ```
 
-**File organization:**
-
-- If model/enum is small and used only within another model, it can be in the same file
-- Larger models and enums should be in separate files
-
 ---
 
 ## Angular Specifics
@@ -1246,6 +1363,40 @@ constructor(
 ✔️ Good
 #userService = inject(UserService);
 #router = inject(Router);
+```
+
+### Guards and Interceptors
+
+Guards and interceptors must be written as functions, not classes:
+
+```ts
+❌ Bad
+@Injectable()
+export class AuthGuard implements CanActivate {
+	canActivate(): boolean {
+		// ...
+	}
+}
+
+✔️ Good
+export const authGuard: CanActivateFn = () => {
+	// ...
+};
+```
+
+```ts
+❌ Bad
+@Injectable()
+export class AuthInterceptor implements HttpInterceptor {
+	intercept(req: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
+		// ...
+	}
+}
+
+✔️ Good
+export const authInterceptor: HttpInterceptorFn = (req, next) => {
+	// ...
+};
 ```
 
 ### Templates
