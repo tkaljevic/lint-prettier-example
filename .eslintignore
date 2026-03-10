@@ -1,5 +1,6 @@
 # Ignore AI skill templates - they are not part of the actual project
 angular-typescript-style/
+code-style-guide/
 
 # Standard ignores
 node_modules/
