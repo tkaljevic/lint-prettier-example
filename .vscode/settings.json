@@ -1,13 +1,27 @@
 {
-	"editor.defaultFormatter": "rvest.vs-code-prettier-eslint",
-	"editor.formatOnType": false, // required
-	"editor.formatOnPaste": true, // optional
-	"editor.formatOnSave": true, // optional
-	"editor.formatOnSaveMode": "file", // required to format on save
-	"files.autoSave": "onFocusChange", // optional but recommended
-	"vs-code-prettier-eslint.prettierLast": false,
-	"cSpell.words": ["dbaeumer", "esbenp", "lintstagedrc", "rvest"],
-	"[markdown]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode"
-	} // set as "true" to run 'prettier' last not first
+  "editor.defaultFormatter": "rvest.vs-code-prettier-eslint",
+  "editor.formatOnType": false, // required
+  "editor.formatOnPaste": true, // optional
+  "editor.formatOnSave": true, // optional
+  "editor.formatOnSaveMode": "file", // required to format on save
+  "files.autoSave": "onFocusChange", // optional but recommended
+  "vs-code-prettier-eslint.prettierLast": false,
+  "cSpell.words": ["dbaeumer", "esbenp", "lintstagedrc", "rvest"],
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "workbench.colorCustomizations": {
+    "commandCenter.border": "#e7e7e799",
+    "sash.hoverBorder": "#410eab",
+    "statusBar.background": "#2f0a7c",
+    "statusBar.foreground": "#e7e7e7",
+    "statusBarItem.hoverBackground": "#410eab",
+    "statusBarItem.remoteBackground": "#2f0a7c",
+    "statusBarItem.remoteForeground": "#e7e7e7",
+    "titleBar.activeBackground": "#2f0a7c",
+    "titleBar.activeForeground": "#e7e7e7",
+    "titleBar.inactiveBackground": "#2f0a7c99",
+    "titleBar.inactiveForeground": "#e7e7e799"
+  },
+  "peacock.color": "#2f0a7c" // set as "true" to run 'prettier' last not first
 }
